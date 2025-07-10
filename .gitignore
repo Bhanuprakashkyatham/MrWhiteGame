@@ -1,0 +1,67 @@
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Runtime data
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# Dependency directories
+node_modules/
+.bower_components/
+
+# Build output
+dist/
+build/
+
+# Vite cache
+.vite/
+.vitepress/cache/
+
+# Android specific
+android/app/build/
+android/.gradle/
+android/.idea/
+android/local.properties
+android/.cxx/
+android/build/
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+
+# IDEs and editors
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Capacitor
+capacitor.config.ts
+capacitor.config.json.backup
+plugins/
+android/capacitor-cordova-android-plugins/
+
+# Environment files
+.env
+.env.*
+
+# Testing
+coverage/
+*.lcov
+
+# Optional: if you're using yarn
+yarn.lock
+
+# Optional: if you're using npm and want to ignore lockfile
+package-lock.json
+
+# Others
+*.bak
+*.tmp
+*~

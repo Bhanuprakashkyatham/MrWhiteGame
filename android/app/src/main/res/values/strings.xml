@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">mr-white-game</string>
+    <string name="title_activity_main">mr-white-game</string>
+    <string name="package_name">com.bhanu.mrwhite</string>
+    <string name="custom_url_scheme">com.bhanu.mrwhite</string>
+</resources>
