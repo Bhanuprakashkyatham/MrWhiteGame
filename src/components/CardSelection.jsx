@@ -1,11 +1,8 @@
 import React, { useEffect, useState } from "react";
+import { getUniqueRandomPair } from "../utils/getUniqueWordPairs";
 
 export default function CardSelection({ count }) {
-  const randomWords = [
-    { black: "Sunrise", white: "Sunset" },
-    { black: "Milkshake", white: "Smoothie" },
-  ];
-
+  
   const [selectedWordPair, setSelectedWordPair] = useState(null);
   const [playerCards, setPlayerCards] = useState([]);
   const [showModal, setShowModal] = useState(false);
@@ -24,9 +21,7 @@ export default function CardSelection({ count }) {
 
 
   useEffect(() => {
-    // 1. Pick a random word pair
-    const randomIndex = Math.floor(Math.random() * randomWords.length);
-    const wordPair = randomWords[randomIndex];
+    const wordPair = getUniqueRandomPair();
     setSelectedWordPair(wordPair);
 
     // 2. Create default cards
