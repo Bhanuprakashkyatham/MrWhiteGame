@@ -8,12 +8,12 @@ export default {
     extend: {
       colors: {
         party: {
-          pink: "#FF4ECD",
-          purple: "#8B5CF6",
-          orange: "#FF8A3D",
-          yellow: "#FFD23F",
-          mint: "#5EEAD4",
-          deep: "#1B0A3E",
+          pink: "#EC4899",
+          purple: "#BE185D",
+          orange: "#F97316",
+          yellow: "#FBBF24",
+          mint: "#FDA4AF",
+          deep: "#1A1147",
         },
       },
       animation: {
