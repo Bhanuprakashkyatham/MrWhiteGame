@@ -3,14 +3,15 @@ import { motion } from "framer-motion";
 
 const VARIANTS = {
   primary:
-    "bg-gradient-to-r from-party-pink via-party-purple to-party-orange text-white shadow-lg shadow-party-purple/40 hover:shadow-party-pink/50",
+    "bg-gradient-to-b from-[#e6c466] via-party-pink to-[#a8841f] text-party-deep shadow-lg shadow-amber-900/40 hover:shadow-amber-500/30 ring-1 ring-amber-300/30",
   secondary:
-    "bg-white/15 text-white border border-white/30 backdrop-blur-md hover:bg-white/25",
-  ghost: "bg-transparent text-white/80 hover:text-white hover:bg-white/10",
+    "bg-white/[0.06] text-party-mint border border-white/15 backdrop-blur-md hover:bg-white/[0.1] hover:border-white/25",
+  ghost:
+    "bg-transparent text-party-mint/70 hover:text-party-mint hover:bg-white/[0.05]",
   danger:
-    "bg-gradient-to-r from-rose-500 to-red-600 text-white shadow-lg shadow-rose-500/40",
+    "bg-gradient-to-b from-rose-600 to-rose-800 text-white shadow-lg shadow-rose-900/40 ring-1 ring-rose-400/30",
   success:
-    "bg-gradient-to-r from-emerald-400 to-teal-500 text-white shadow-lg shadow-emerald-500/40",
+    "bg-gradient-to-b from-emerald-500 to-emerald-700 text-white shadow-lg shadow-emerald-900/40 ring-1 ring-emerald-300/30",
 };
 
 const SIZES = {

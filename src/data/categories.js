@@ -1,51 +1,53 @@
+// Casino-chip style — each category reads as a deep, rich tile against
+// the dark elegant background. No bright pastels.
 export const CATEGORIES = [
   {
     key: "all",
     label: "All",
     emoji: "🎲",
-    gradient: "from-fuchsia-500 via-pink-500 to-orange-400",
+    gradient: "from-amber-700 via-amber-600 to-yellow-700",
   },
   {
     key: "food",
     label: "Food & Drink",
     emoji: "🍔",
-    gradient: "from-orange-400 via-amber-400 to-yellow-300",
+    gradient: "from-orange-800 via-amber-700 to-yellow-800",
   },
   {
     key: "tech",
     label: "Tech",
     emoji: "💻",
-    gradient: "from-cyan-400 via-blue-500 to-indigo-500",
+    gradient: "from-slate-700 via-slate-600 to-cyan-800",
   },
   {
     key: "nature",
     label: "Nature",
     emoji: "🌿",
-    gradient: "from-emerald-400 via-green-500 to-teal-500",
+    gradient: "from-emerald-800 via-emerald-700 to-teal-800",
   },
   {
     key: "entertainment",
     label: "Entertainment",
     emoji: "🎬",
-    gradient: "from-purple-500 via-violet-500 to-fuchsia-500",
+    gradient: "from-indigo-900 via-purple-800 to-fuchsia-900",
   },
   {
     key: "household",
     label: "Household",
     emoji: "🛋️",
-    gradient: "from-amber-500 via-orange-500 to-red-500",
+    gradient: "from-stone-700 via-amber-800 to-red-900",
   },
   {
     key: "clothing",
     label: "Clothing",
     emoji: "👕",
-    gradient: "from-pink-400 via-rose-400 to-fuchsia-400",
+    gradient: "from-rose-900 via-pink-800 to-fuchsia-900",
   },
   {
     key: "misc",
     label: "Surprise",
     emoji: "✨",
-    gradient: "from-indigo-500 via-purple-500 to-pink-500",
+    gradient: "from-violet-900 via-indigo-800 to-blue-900",
   },
 ];
 

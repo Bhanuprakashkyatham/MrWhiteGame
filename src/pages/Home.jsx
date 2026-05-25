@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import PageShell from "../components/ui/PageShell";
 import Button from "../components/ui/Button";
+import ThemePicker from "../components/ThemePicker";
 
 const popupMessages = [
   "Someone knows a different word...",
@@ -17,6 +18,7 @@ const popupMessages = [
 export default function Home() {
   const navigate = useNavigate();
   const [popupText, setPopupText] = useState(null);
+  const [themeOpen, setThemeOpen] = useState(false);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -29,6 +31,19 @@ export default function Home() {
 
   return (
     <PageShell>
+      {/* Top-left quick theme toggle */}
+      <motion.button
+        onClick={() => setThemeOpen(true)}
+        whileHover={{ scale: 1.1, rotate: -8 }}
+        whileTap={{ scale: 0.9 }}
+        transition={{ type: "spring", stiffness: 260 }}
+        className="absolute top-5 left-5 w-12 h-12 rounded-full bg-white/10 backdrop-blur-md border border-white/30 flex items-center justify-center text-2xl z-20 shadow-lg"
+        title="Change theme"
+        aria-label="Change theme"
+      >
+        🎨
+      </motion.button>
+
       {/* Top-right settings gear */}
       <motion.button
         onClick={() => navigate("/settings")}
@@ -105,6 +120,42 @@ export default function Home() {
           )}
         </AnimatePresence>
       </div>
+
+      {/* Theme picker modal */}
+      <AnimatePresence>
+        {themeOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+            onClick={() => setThemeOpen(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.85, opacity: 0, y: 12 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.85, opacity: 0 }}
+              transition={{ type: "spring", stiffness: 260, damping: 22 }}
+              className="bg-gradient-to-br from-party-purple via-party-deep to-black rounded-3xl p-5 md:p-6 max-w-lg w-full text-party-mint border border-party-pink/30 shadow-2xl shadow-black/60 max-h-[85vh] overflow-y-auto"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between mb-1">
+                <h3 className="text-xl font-extrabold">🎨 Pick a theme</h3>
+                <button
+                  onClick={() => setThemeOpen(false)}
+                  className="text-party-mint/60 hover:text-party-mint text-sm px-2 py-1"
+                >
+                  Close
+                </button>
+              </div>
+              <p className="text-sm text-party-mint/70 mb-4">
+                Changes apply instantly to the whole app.
+              </p>
+              <ThemePicker />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </PageShell>
   );
 }

@@ -1,8 +1,10 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { getTheme, DEFAULT_THEME_KEY } from "../data/themes";
 
 const EVENTS_KEY = "mw_events";
 const ACTIVE_EVENT_KEY = "mw_active_event_id";
 const CATEGORY_KEY = "mw_selected_category";
+const THEME_KEY = "mw_theme";
 
 const GameContext = createContext(null);
 
@@ -39,10 +41,24 @@ export function GameProvider({ children }) {
   const [selectedCategory, setSelectedCategoryState] = useState(() =>
     safeRead(CATEGORY_KEY, "all")
   );
+  const [themeKey, setThemeKeyState] = useState(() =>
+    safeRead(THEME_KEY, DEFAULT_THEME_KEY)
+  );
 
   useEffect(() => safeWrite(EVENTS_KEY, events), [events]);
   useEffect(() => safeWrite(ACTIVE_EVENT_KEY, activeEventId), [activeEventId]);
   useEffect(() => safeWrite(CATEGORY_KEY, selectedCategory), [selectedCategory]);
+  useEffect(() => safeWrite(THEME_KEY, themeKey), [themeKey]);
+
+  // Apply the theme palette to CSS variables on :root so every Tailwind
+  // `*-party-*` utility re-resolves to the new colors instantly.
+  useEffect(() => {
+    const theme = getTheme(themeKey);
+    const root = document.documentElement;
+    Object.entries(theme.colors).forEach(([token, value]) => {
+      root.style.setProperty(`--color-${token}`, value);
+    });
+  }, [themeKey]);
 
   const createEvent = ({ name, players }) => {
     const newEvent = {
@@ -102,6 +118,7 @@ export function GameProvider({ children }) {
 
   const setActiveEvent = (id) => setActiveEventIdState(id);
   const setSelectedCategory = (key) => setSelectedCategoryState(key);
+  const setTheme = (key) => setThemeKeyState(key);
 
   const touchEventPlayed = (id) => {
     setEvents((prev) =>
@@ -114,17 +131,22 @@ export function GameProvider({ children }) {
     [events, activeEventId]
   );
 
+  const theme = useMemo(() => getTheme(themeKey), [themeKey]);
+
   const value = {
     events,
     activeEvent,
     activeEventId,
     selectedCategory,
+    themeKey,
+    theme,
     createEvent,
     updateEvent,
     deleteEvent,
     duplicateEvent,
     setActiveEvent,
     setSelectedCategory,
+    setTheme,
     touchEventPlayed,
   };
 

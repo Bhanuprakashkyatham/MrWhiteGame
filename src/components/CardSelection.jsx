@@ -16,6 +16,7 @@ export default function CardSelection({ event, category }) {
   const [selectedWordPair, setSelectedWordPair] = useState(null);
   const [playerCards, setPlayerCards] = useState([]);
   const [activeCard, setActiveCard] = useState(null);
+  const [stage, setStage] = useState("claim"); // 'claim' | 'reveal'
   const [showOverlay, setShowOverlay] = useState(false);
   const [showStartGame, setShowStartGame] = useState(false);
   const [gameStarted, setGameStarted] = useState(false);
@@ -23,22 +24,20 @@ export default function CardSelection({ event, category }) {
   const [gameOver, setGameOver] = useState(false);
   const [roundKey, setRoundKey] = useState(0);
 
-  // (Re)deal the round whenever event/category/roundKey changes.
+  // (Re)deal the round — cards are dealt anonymously. Players will
+  // claim their seat by picking themselves from the roster.
   useEffect(() => {
     const wordPair = getUniqueRandomPair(category);
     setSelectedWordPair(wordPair);
 
-    const cards = event.players.map((p, i) => ({
-      id: p.id,
-      name: p.name,
-      avatar: p.avatar,
+    const cards = Array.from({ length: event.players.length }, (_, i) => ({
+      seat: i + 1,
       word: wordPair.black.word,
       wordEmoji: wordPair.black.emoji,
       wordDesc: wordPair.black.desc,
       role: "civilian",
-      revealed: false,
+      claimedBy: null,
       voted: false,
-      seat: i + 1,
     }));
 
     const whiteIndex = Math.floor(Math.random() * cards.length);
@@ -49,6 +48,7 @@ export default function CardSelection({ event, category }) {
 
     setPlayerCards(cards);
     setActiveCard(null);
+    setStage("claim");
     setShowOverlay(false);
     setShowStartGame(false);
     setGameStarted(false);
@@ -57,33 +57,61 @@ export default function CardSelection({ event, category }) {
   }, [event, category, roundKey]);
 
   useEffect(() => {
+    // Wait until the last player has dismissed their reveal modal
+    // before prompting "Start Voting" — otherwise it pops on top of
+    // the final reveal.
     if (
       !gameStarted &&
+      !activeCard &&
       playerCards.length > 0 &&
-      playerCards.every((c) => c.revealed)
+      playerCards.every((c) => c.claimedBy)
     ) {
       setShowStartGame(true);
     }
-  }, [playerCards, gameStarted]);
+  }, [playerCards, gameStarted, activeCard]);
+
+  const getPlayerById = (id) =>
+    event.players.find((p) => p.id === id) || null;
+
+  const availablePlayers = (() => {
+    const claimedIds = new Set(
+      playerCards.filter((c) => c.claimedBy).map((c) => c.claimedBy)
+    );
+    return event.players.filter((p) => !claimedIds.has(p.id));
+  })();
 
   const handleCardTap = (card) => {
-    if (!card.revealed && !gameStarted) {
+    if (!card.claimedBy && !gameStarted) {
       setActiveCard(card);
+      setStage("claim");
       return;
     }
-    if (gameStarted && card.revealed && !card.voted && !gameOver) {
+    if (gameStarted && card.claimedBy && !card.voted && !gameOver) {
       setVotedPlayer(card);
     }
   };
 
-  const confirmReveal = () => {
+  const handleClaim = (playerId) => {
     if (!activeCard) return;
     setPlayerCards((prev) =>
-      prev.map((c) => (c.id === activeCard.id ? { ...c, revealed: true } : c))
+      prev.map((c) =>
+        c.seat === activeCard.seat ? { ...c, claimedBy: playerId } : c
+      )
     );
+    setActiveCard((prev) => (prev ? { ...prev, claimedBy: playerId } : prev));
+    setStage("reveal");
+  };
+
+  const confirmReveal = () => {
     setActiveCard(null);
+    setStage("claim");
     setShowOverlay(true);
     setTimeout(() => setShowOverlay(false), 900);
+  };
+
+  const cancelClaim = () => {
+    setActiveCard(null);
+    setStage("claim");
   };
 
   const playAgain = () => {
@@ -97,7 +125,7 @@ export default function CardSelection({ event, category }) {
   };
 
   const categoryInfo = getCategory(category);
-  const revealedCount = playerCards.filter((c) => c.revealed).length;
+  const claimedCount = playerCards.filter((c) => c.claimedBy).length;
   const totalPlayers = playerCards.length;
 
   return (
@@ -118,7 +146,7 @@ export default function CardSelection({ event, category }) {
           </div>
 
           <div className="text-xs text-white/70">
-            {gameStarted ? "Voting" : `${revealedCount}/${totalPlayers}`}
+            {gameStarted ? "Voting" : `${claimedCount}/${totalPlayers}`}
           </div>
         </div>
 
@@ -132,37 +160,40 @@ export default function CardSelection({ event, category }) {
           >
             {gameStarted
               ? "🗳️ Who is Mr. White?"
-              : "🤫 Tap your card to peek"}
+              : "🤫 Pick a mystery card"}
           </motion.h2>
           <p className="text-white/70 text-sm mt-1">
             {gameStarted
               ? "Discuss, then tap a player to accuse."
-              : "One word is different. Don't get caught."}
+              : "Tap any card, then choose yourself from the roster."}
           </p>
         </div>
 
         {/* Card grid */}
         <div className="flex flex-wrap justify-center gap-4 mt-6">
-          {playerCards.map((card, idx) => (
-            <GameCard
-              key={card.id}
-              player={card}
-              flipped={false}
-              revealed={card.revealed}
-              voted={card.voted}
-              dimmed={
-                (card.revealed && !gameStarted) ||
-                (gameStarted && card.voted) ||
-                gameOver
-              }
-              index={idx}
-              onClick={() => handleCardTap(card)}
-            />
-          ))}
+          {playerCards.map((card, idx) => {
+            const claimedPlayer = card.claimedBy
+              ? getPlayerById(card.claimedBy)
+              : null;
+            return (
+              <GameCard
+                key={card.seat}
+                unclaimed={!card.claimedBy}
+                player={claimedPlayer}
+                seat={card.seat}
+                voted={card.voted}
+                dimmed={
+                  (gameStarted && card.voted) || gameOver
+                }
+                index={idx}
+                onClick={() => handleCardTap(card)}
+              />
+            );
+          })}
         </div>
       </div>
 
-      {/* Reveal modal */}
+      {/* Claim + Reveal modal (two stages) */}
       <AnimatePresence>
         {activeCard && (
           <motion.div
@@ -172,56 +203,104 @@ export default function CardSelection({ event, category }) {
             className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4"
           >
             <motion.div
-              initial={{ scale: 0.7, opacity: 0, rotateY: -30 }}
+              key={stage}
+              initial={{ scale: 0.7, opacity: 0, rotateY: -20 }}
               animate={{ scale: 1, opacity: 1, rotateY: 0 }}
               exit={{ scale: 0.85, opacity: 0 }}
               transition={{ type: "spring", stiffness: 220, damping: 22 }}
-              className="bg-gradient-to-br from-party-pink via-party-purple to-party-deep rounded-3xl shadow-2xl text-white text-center w-full max-w-sm p-6 border-2 border-white/30"
+              className="bg-gradient-to-br from-party-purple via-party-deep to-black rounded-3xl shadow-2xl shadow-black/60 text-party-mint text-center w-full max-w-md p-6 border border-party-pink/40"
             >
-              <div className="text-3xl mb-1">
-                {getAvatar(activeCard.avatar).emoji}
-              </div>
-              <div className="text-sm uppercase tracking-widest text-white/70 mb-1">
-                {activeCard.name}
-              </div>
-              <div className="text-xs text-white/60 mb-4">Your secret word</div>
+              {stage === "claim" && (
+                <>
+                  <div className="text-3xl mb-1">🎭</div>
+                  <div className="text-sm uppercase tracking-widest text-party-mint/70 mb-1">
+                    Card #{activeCard.seat}
+                  </div>
+                  <h2 className="text-2xl font-black mb-1">Who are you?</h2>
+                  <p className="text-xs text-party-mint/60 mb-5">
+                    Tap your icon to claim this seat.
+                  </p>
 
-              <motion.div
-                initial={{ scale: 0.6, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ delay: 0.12, type: "spring", stiffness: 260 }}
-                className="text-6xl md:text-7xl mb-2 drop-shadow-lg"
-              >
-                {activeCard.wordEmoji}
-              </motion.div>
+                  <div className="grid grid-cols-3 gap-3 mb-5 max-h-72 overflow-y-auto px-1">
+                    {availablePlayers.map((p, i) => {
+                      const av = getAvatar(p.avatar);
+                      return (
+                        <motion.button
+                          key={p.id}
+                          type="button"
+                          onClick={() => handleClaim(p.id)}
+                          initial={{ opacity: 0, scale: 0.85 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          transition={{ delay: i * 0.04, type: "spring", stiffness: 280 }}
+                          whileHover={{ scale: 1.06, y: -2 }}
+                          whileTap={{ scale: 0.95 }}
+                          className="flex flex-col items-center gap-1 p-3 rounded-2xl bg-white/[0.04] border border-white/10 hover:border-party-pink/60 hover:bg-white/[0.08] transition"
+                        >
+                          <div className="text-3xl drop-shadow">{av.emoji}</div>
+                          <div className="text-xs font-semibold text-party-mint truncate max-w-full">
+                            {p.name}
+                          </div>
+                        </motion.button>
+                      );
+                    })}
+                  </div>
 
-              <motion.div
-                initial={{ scale: 0.7, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ delay: 0.2, type: "spring", stiffness: 260 }}
-                className="text-3xl md:text-4xl font-black mb-2 drop-shadow-lg bg-gradient-to-r from-party-yellow to-party-mint bg-clip-text text-transparent"
-              >
-                {activeCard.word}
-              </motion.div>
-
-              {activeCard.wordDesc && (
-                <motion.p
-                  initial={{ opacity: 0, y: 6 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.32 }}
-                  className="text-sm text-white/80 italic mb-5 px-2"
-                >
-                  {activeCard.wordDesc}
-                </motion.p>
+                  <Button variant="ghost" onClick={cancelClaim}>
+                    Cancel
+                  </Button>
+                </>
               )}
 
-              <p className="text-xs text-white/60 mb-4 italic">
-                Remember it. Don't say it out loud.
-              </p>
+              {stage === "reveal" && activeCard.claimedBy && (
+                <>
+                  <div className="text-3xl mb-1">
+                    {getAvatar(getPlayerById(activeCard.claimedBy)?.avatar).emoji}
+                  </div>
+                  <div className="text-sm uppercase tracking-widest text-party-mint/70 mb-1">
+                    {getPlayerById(activeCard.claimedBy)?.name}
+                  </div>
+                  <div className="text-xs text-party-mint/60 mb-4">
+                    Your secret word
+                  </div>
 
-              <Button size="lg" onClick={confirmReveal}>
-                Got it
-              </Button>
+                  <motion.div
+                    initial={{ scale: 0.6, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ delay: 0.12, type: "spring", stiffness: 260 }}
+                    className="text-6xl md:text-7xl mb-2 drop-shadow-lg"
+                  >
+                    {activeCard.wordEmoji}
+                  </motion.div>
+
+                  <motion.div
+                    initial={{ scale: 0.7, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ delay: 0.2, type: "spring", stiffness: 260 }}
+                    className="text-3xl md:text-4xl font-black mb-2 drop-shadow-lg bg-gradient-to-r from-party-yellow to-party-mint bg-clip-text text-transparent"
+                  >
+                    {activeCard.word}
+                  </motion.div>
+
+                  {activeCard.wordDesc && (
+                    <motion.p
+                      initial={{ opacity: 0, y: 6 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.32 }}
+                      className="text-sm text-party-mint/80 italic mb-5 px-2"
+                    >
+                      {activeCard.wordDesc}
+                    </motion.p>
+                  )}
+
+                  <p className="text-xs text-party-mint/60 mb-4 italic">
+                    Remember it. Don't say it out loud.
+                  </p>
+
+                  <Button size="lg" onClick={confirmReveal}>
+                    Got it
+                  </Button>
+                </>
+              )}
             </motion.div>
           </motion.div>
         )}
@@ -265,7 +344,7 @@ export default function CardSelection({ event, category }) {
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.8, opacity: 0 }}
               transition={{ type: "spring", stiffness: 240 }}
-              className="bg-gradient-to-br from-party-deep to-party-purple rounded-3xl p-7 text-center max-w-sm w-full text-white border-2 border-white/30 shadow-2xl"
+              className="bg-gradient-to-br from-party-purple via-party-deep to-black rounded-3xl p-7 text-center max-w-sm w-full text-party-mint border border-party-pink/30 shadow-2xl shadow-black/60"
             >
               <div className="text-5xl mb-3">🎬</div>
               <h2 className="text-2xl font-black mb-2">All set!</h2>
@@ -301,13 +380,13 @@ export default function CardSelection({ event, category }) {
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.8, opacity: 0 }}
               transition={{ type: "spring", stiffness: 240 }}
-              className="bg-gradient-to-br from-party-deep to-party-purple rounded-3xl p-6 text-center max-w-sm w-full text-white border-2 border-white/30 shadow-2xl"
+              className="bg-gradient-to-br from-party-purple via-party-deep to-black rounded-3xl p-6 text-center max-w-sm w-full text-party-mint border border-party-pink/30 shadow-2xl shadow-black/60"
             >
               <div className="text-5xl mb-2">
-                {getAvatar(votedPlayer.avatar).emoji}
+                {getAvatar(getPlayerById(votedPlayer.claimedBy)?.avatar).emoji}
               </div>
               <div className="text-lg font-bold mb-1">
-                {votedPlayer.name}
+                {getPlayerById(votedPlayer.claimedBy)?.name}
               </div>
               <motion.div
                 initial={{ scale: 0.5, opacity: 0 }}
@@ -336,11 +415,11 @@ export default function CardSelection({ event, category }) {
                     setVotedPlayer(null);
                     setGameOver(true);
                   } else {
-                    const target = votedPlayer.id;
+                    const targetSeat = votedPlayer.seat;
                     setVotedPlayer(null);
                     setPlayerCards((prev) =>
                       prev.map((c) =>
-                        c.id === target ? { ...c, voted: true } : c
+                        c.seat === targetSeat ? { ...c, voted: true } : c
                       )
                     );
                   }
@@ -369,7 +448,7 @@ export default function CardSelection({ event, category }) {
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.7, opacity: 0 }}
               transition={{ type: "spring", stiffness: 220 }}
-              className="bg-gradient-to-br from-party-deep to-party-purple rounded-3xl p-6 text-center max-w-md w-full text-white border-2 border-white/30 shadow-2xl"
+              className="bg-gradient-to-br from-party-purple via-party-deep to-black rounded-3xl p-6 text-center max-w-md w-full text-party-mint border border-party-pink/30 shadow-2xl shadow-black/60"
             >
               <div className="text-5xl mb-2 animate-wiggle inline-block">
                 🎉
@@ -383,9 +462,10 @@ export default function CardSelection({ event, category }) {
               <div className="space-y-2 max-h-72 overflow-y-auto mb-5 px-1">
                 {playerCards.map((c) => {
                   const isWhite = c.role === "mrwhite";
+                  const player = getPlayerById(c.claimedBy);
                   return (
                     <div
-                      key={c.id}
+                      key={c.seat}
                       className={`flex items-center justify-between rounded-xl px-3 py-2 ${
                         isWhite
                           ? "bg-rose-500/30 border border-rose-300/50"
@@ -394,9 +474,11 @@ export default function CardSelection({ event, category }) {
                     >
                       <div className="flex items-center gap-2 min-w-0">
                         <span className="text-xl">
-                          {getAvatar(c.avatar).emoji}
+                          {player ? getAvatar(player.avatar).emoji : "❓"}
                         </span>
-                        <span className="font-semibold truncate">{c.name}</span>
+                        <span className="font-semibold truncate">
+                          {player?.name || `Seat #${c.seat}`}
+                        </span>
                         {isWhite && (
                           <span className="text-xs bg-rose-500 text-white px-2 py-0.5 rounded-full shrink-0">
                             Mr. White

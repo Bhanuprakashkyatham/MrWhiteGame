@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import PageShell from "../components/ui/PageShell";
 import Button from "../components/ui/Button";
+import ThemePicker from "../components/ThemePicker";
 import { useGame } from "../context/GameContext";
 import { getAvatar } from "../data/avatars";
 
@@ -34,6 +35,20 @@ export default function SettingsPage() {
             Settings
           </h1>
           <div className="w-12" />
+        </div>
+
+        {/* Theme picker */}
+        <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-3xl p-5 md:p-6 mb-6">
+          <div className="flex items-baseline justify-between mb-1">
+            <h2 className="text-lg font-bold">Theme</h2>
+            <span className="text-xs text-party-mint/60">
+              Pick the vibe for your session
+            </span>
+          </div>
+          <p className="text-sm text-party-mint/70 mb-4">
+            Each theme reskins the whole app instantly. Try them out.
+          </p>
+          <ThemePicker />
         </div>
 
         <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-3xl p-5 md:p-6 mb-6">
@@ -145,7 +160,7 @@ export default function SettingsPage() {
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.85, opacity: 0 }}
               transition={{ type: "spring", stiffness: 280 }}
-              className="bg-gradient-to-br from-party-deep to-party-purple text-white rounded-3xl p-6 max-w-sm w-full border border-white/20 shadow-2xl"
+              className="bg-gradient-to-br from-party-purple via-party-deep to-black text-party-mint rounded-3xl p-6 max-w-sm w-full border border-party-pink/30 shadow-2xl shadow-black/60"
               onClick={(e) => e.stopPropagation()}
             >
               <h3 className="text-xl font-extrabold mb-2">Delete roster?</h3>

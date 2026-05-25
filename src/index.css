@@ -1,13 +1,13 @@
 @import "tailwindcss";
 
 @theme {
-  /* Sunset Glow palette — deep indigo → ruby → coral → amber → gold */
-  --color-party-pink: #ec4899;   /* hot pink / coral */
-  --color-party-purple: #be185d; /* deep rose (was violet) */
-  --color-party-orange: #f97316; /* vivid orange */
-  --color-party-yellow: #fbbf24; /* warm gold */
-  --color-party-mint: #fda4af;   /* soft peach (was mint) */
-  --color-party-deep: #1a1147;   /* deep indigo-navy */
+  /* Midnight + Champagne — dark elegant palette */
+  --color-party-pink: #d4af37;   /* champagne gold (hero accent) */
+  --color-party-purple: #1f2937; /* slate surface (was violet) */
+  --color-party-orange: #b8741a; /* deep amber */
+  --color-party-yellow: #e4c068; /* soft gold highlight */
+  --color-party-mint: #e8e6e1;   /* warm pearl / elegant white */
+  --color-party-deep: #0b0e1a;   /* near-black with blue depth */
 
   --animate-fade-in-out: fadeInOut 2s ease-in-out;
   --animate-wiggle: wiggle 0.6s ease-in-out infinite;

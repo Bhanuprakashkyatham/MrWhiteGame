@@ -1,113 +1,86 @@
 import React from "react";
 import { motion } from "framer-motion";
+import { useGame } from "../../context/GameContext";
 
-// Mesh gradient blobs — large, blurred, slowly drifting circles that
-// paint a sunset sky behind the content. Each blob has its own loop so
-// the background feels alive without becoming busy.
-const BLOBS = [
-  {
-    color: "#fda4af", // peach
-    size: 620,
-    initial: { top: "-12%", left: "-10%" },
-    drift: { x: [0, 40, 0], y: [0, 30, 0] },
-    duration: 14,
-    opacity: 0.55,
-  },
-  {
-    color: "#ec4899", // hot coral
-    size: 720,
-    initial: { top: "18%", right: "-14%" },
-    drift: { x: [0, -50, 0], y: [0, 40, 0] },
-    duration: 16,
-    opacity: 0.5,
-  },
-  {
-    color: "#f97316", // vivid orange
-    size: 700,
-    initial: { bottom: "-18%", left: "-8%" },
-    drift: { x: [0, 60, 0], y: [0, -30, 0] },
-    duration: 18,
-    opacity: 0.6,
-  },
-  {
-    color: "#fbbf24", // gold
-    size: 540,
-    initial: { bottom: "-10%", right: "-6%" },
-    drift: { x: [0, -40, 0], y: [0, -50, 0] },
-    duration: 20,
-    opacity: 0.45,
-  },
-  {
-    color: "#9f1239", // ruby (mid-depth accent)
-    size: 480,
-    initial: { top: "32%", left: "30%" },
-    drift: { x: [0, 30, -20, 0], y: [0, -25, 20, 0] },
-    duration: 22,
-    opacity: 0.35,
-  },
-];
-
+/**
+ * Theme-aware page shell. Reads `theme.shell` from GameContext so each
+ * theme can ship its own backdrop (solid vs gradient base, glow colors,
+ * vignette darkness, grain) while the rest of the app's surfaces follow
+ * the shared color tokens.
+ */
 export default function PageShell({ children, className = "" }) {
+  const { theme } = useGame();
+  const shell = theme.shell;
+
   return (
     <div
-      className={`relative min-h-screen w-full overflow-hidden text-white ${className}`}
+      className={`relative min-h-screen w-full overflow-hidden text-party-mint ${className}`}
     >
-      {/* Base linear sunset gradient (deep indigo → ruby → coral → amber → gold) */}
+      {/* Base — solid or gradient depending on theme */}
       <div
         className="absolute inset-0"
         style={{
-          background:
-            "linear-gradient(180deg, #1a1147 0%, #4c1d52 28%, #9f1239 52%, #ec4899 72%, #f97316 88%, #fbbf24 100%)",
+          background: shell.gradient || shell.base,
         }}
       />
 
-      {/* Animated mesh-gradient blobs for painted depth */}
-      <div className="absolute inset-0 pointer-events-none">
-        {BLOBS.map((blob, i) => (
-          <motion.div
-            key={i}
-            initial={false}
-            animate={{
-              x: blob.drift.x,
-              y: blob.drift.y,
-              scale: [1, 1.08, 1],
-            }}
-            transition={{
-              duration: blob.duration,
-              repeat: Infinity,
-              ease: "easeInOut",
-              delay: i * 0.6,
-            }}
-            className="absolute rounded-full"
-            style={{
-              ...blob.initial,
-              width: blob.size,
-              height: blob.size,
-              filter: "blur(80px)",
-              opacity: blob.opacity,
-              background: `radial-gradient(circle at center, ${blob.color} 0%, transparent 70%)`,
-              willChange: "transform",
-            }}
-          />
-        ))}
-      </div>
-
-      {/* Subtle film-grain noise via CSS gradient (gives texture) */}
-      <div
-        className="absolute inset-0 pointer-events-none opacity-[0.08] mix-blend-overlay"
+      {/* Top focal glow — gently breathes */}
+      <motion.div
+        initial={false}
+        animate={{ opacity: [0.18, 0.28, 0.18], scale: [1, 1.05, 1] }}
+        transition={{ duration: 14, repeat: Infinity, ease: "easeInOut" }}
+        className="absolute pointer-events-none"
         style={{
+          top: "-10%",
+          left: "50%",
+          transform: "translateX(-50%)",
+          width: "90vw",
+          maxWidth: 900,
+          height: 900,
+          filter: "blur(120px)",
+          background: `radial-gradient(circle at center, ${shell.glowColor} 0%, transparent 70%)`,
+        }}
+      />
+
+      {/* Counter glow at the bottom for balance */}
+      <div
+        className="absolute pointer-events-none"
+        style={{
+          bottom: "-20%",
+          left: "50%",
+          transform: "translateX(-50%)",
+          width: "120vw",
+          height: 700,
+          filter: "blur(140px)",
+          opacity: 0.6,
+          background: `radial-gradient(circle at center, ${shell.counterGlowColor} 0%, transparent 65%)`,
+        }}
+      />
+
+      {/* Vignette — focuses the eye on the center */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background: `radial-gradient(ellipse at center, transparent 0%, transparent 40%, rgba(0,0,0,${shell.vignetteAlpha}) 100%)`,
+        }}
+      />
+
+      {/* Hairline top accent for header separation */}
+      <div
+        className="absolute inset-x-0 top-0 h-px pointer-events-none"
+        style={{
+          background: `linear-gradient(90deg, transparent 0%, ${shell.topAccent} 50%, transparent 100%)`,
+        }}
+      />
+
+      {/* Film grain texture */}
+      <div
+        className="absolute inset-0 pointer-events-none mix-blend-overlay"
+        style={{
+          opacity: shell.grainOpacity,
           backgroundImage:
-            "radial-gradient(rgba(255,255,255,0.15) 1px, transparent 1px)",
+            "radial-gradient(rgba(255,255,255,0.4) 1px, transparent 1px)",
           backgroundSize: "3px 3px",
-        }}
-      />
-
-      {/* Top fade for header legibility */}
-      <div
-        className="absolute inset-x-0 top-0 h-32 pointer-events-none"
-        style={{
-          background:
-            "linear-gradient(180deg, rgba(26,17,71,0.45) 0%, transparent 100%)",
         }}
       />
 
